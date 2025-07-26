@@ -1,0 +1,2 @@
+# This file ensures the repo_analysis directory is tracked by Git
+# while ignoring its contents (repositories being analyzed)
