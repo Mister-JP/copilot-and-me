@@ -42,14 +42,14 @@
 
 ## 🛠️ Tech Stack
 
-| Category        | Technology                            |
-| --------------- | ------------------------------------- |
-| **Frontend**    | Next.js 14, React 18, TypeScript 5+  |
-| **Styling**     | Tailwind CSS, Custom Components      |
-| **Backend**     | Next.js API Routes, Node.js          |
-| **Logging**     | Custom Rotating Logger with JSON     |
+| Category         | Technology                          |
+| ---------------- | ----------------------------------- |
+| **Frontend**     | Next.js 14, React 18, TypeScript 5+ |
+| **Styling**      | Tailwind CSS, Custom Components     |
+| **Backend**      | Next.js API Routes, Node.js         |
+| **Logging**      | Custom Rotating Logger with JSON    |
 | **Code Quality** | ESLint, Prettier, Strict TypeScript |
-| **Development** | Hot Reload, Build Optimization       |
+| **Development**  | Hot Reload, Build Optimization      |
 
 ## 🚀 Quick Start
 
@@ -76,13 +76,13 @@ npm run validate
 
 ### Core Endpoints
 
-| Endpoint          | Method | Description                      | Response             |
-| ----------------- | ------ | -------------------------------- | -------------------- |
-| `/api/memory`     | GET    | Access persistent memory notes   | Plain text content   |
-| `/api/instructions` | GET  | Retrieve AI instructions         | Plain text content   |
-| `/api/repos`      | GET    | List repository analysis data    | JSON array           |
-| `/api/logs`       | GET    | Log system health and statistics | JSON with metrics    |
-| `/api/logs`       | POST   | Trigger manual log cleanup       | JSON confirmation    |
+| Endpoint            | Method | Description                      | Response           |
+| ------------------- | ------ | -------------------------------- | ------------------ |
+| `/api/memory`       | GET    | Access persistent memory notes   | Plain text content |
+| `/api/instructions` | GET    | Retrieve AI instructions         | Plain text content |
+| `/api/repos`        | GET    | List repository analysis data    | JSON array         |
+| `/api/logs`         | GET    | Log system health and statistics | JSON with metrics  |
+| `/api/logs`         | POST   | Trigger manual log cleanup       | JSON confirmation  |
 
 ### Response Examples
 
@@ -106,11 +106,11 @@ npm run validate
 
 ## 📚 Documentation
 
-| Document                                        | Description                               |
-| ----------------------------------------------- | ----------------------------------------- |
-| [Code Quality Guidelines](CODE_QUALITY.md)     | Development standards and best practices  |
-| [Logging Architecture](LOGGING.md)             | Comprehensive logging system docs        |
-| [Log Rotation Details](LOG_ROTATION.md)        | File rotation and cleanup mechanisms     |
+| Document                                   | Description                              |
+| ------------------------------------------ | ---------------------------------------- |
+| [Code Quality Guidelines](CODE_QUALITY.md) | Development standards and best practices |
+| [Logging Architecture](LOGGING.md)         | Comprehensive logging system docs        |
+| [Log Rotation Details](LOG_ROTATION.md)    | File rotation and cleanup mechanisms     |
 
 ## 🏗️ Architecture
 
