@@ -21,7 +21,9 @@ class RotatingLogger {
   private logDir = join(process.cwd(), 'logs');
   private maxFileSize = 10 * 1024 * 1024; // 10MB per file
   private maxDays = 7; // Keep last 7 days
-  private isDev = typeof window !== 'undefined';
+  // Detect development mode based on NODE_ENV
+  // Files should only be written when running in production
+  private isDev = process.env.NODE_ENV !== 'production';
 
   constructor() {
     this.ensureLogDir();
