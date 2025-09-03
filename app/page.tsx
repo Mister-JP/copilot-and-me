@@ -11,6 +11,8 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // TODO: BUG - `console.log` statements should be removed in production.
+    // A wrapper for logging that can be disabled in production should be used.
     console.log('[INFO] Application started');
     loadContent();
   }, []);
@@ -19,9 +21,12 @@ export default function Page() {
     const startTime = Date.now();
 
     try {
+      // TODO: BUG - `console.log` statements should be removed in production.
       console.log('[INFO] Loading content started');
 
       // Load memory
+      // TODO: BUG - Lack of user feedback on partial failures. If some of these fetches
+      // fail, the UI doesn't clearly indicate what went wrong.
       const memoryRes = await fetch('/api/memory');
       if (memoryRes.ok) {
         setMemoryContent(await memoryRes.text());
@@ -76,6 +81,8 @@ export default function Page() {
         setLogStats(prev => ({ ...prev, currentStats: result.stats }));
         console.log('[INFO] Log cleanup completed');
       }
+      // TODO: BUG - No user feedback on failed cleanup. The UI should show a toast or
+      // a message if the cleanup operation fails.
     } catch (error) {
       console.error('[ERROR] Log cleanup failed:', error);
     }

@@ -21,10 +21,14 @@ class RotatingLogger {
   private logDir = join(process.cwd(), 'logs');
   private maxFileSize = 10 * 1024 * 1024; // 10MB per file
   private maxDays = 7; // Keep last 7 days
+  // TODO: BUG - `isDev` is incorrectly determined. `typeof window` is for client-side checks.
+  // For backend, this should be based on `process.env.NODE_ENV`.
   private isDev = typeof window !== 'undefined';
 
   constructor() {
     this.ensureLogDir();
+    // TODO: BUG - `cleanupOldLogs` runs on every instantiation. In a serverless environment,
+    // this is inefficient. This should be run on a schedule or as a separate process.
     this.cleanupOldLogs();
   }
 
@@ -108,7 +112,8 @@ class RotatingLogger {
     const logLine = `${JSON.stringify(entry)}\n`;
 
     try {
-      // Check if rotation needed
+      // TODO: BUG - Potential race condition. If two requests trigger rotation at the same time,
+      // it could lead to lost log entries or corrupted files. A locking mechanism is needed.
       if (existsSync(logFile) && (await this.shouldRotate(logFile))) {
         await this.rotateLogFile(logFile);
       }
@@ -116,7 +121,8 @@ class RotatingLogger {
       // Atomically append to log file to prevent race conditions
       await appendFile(logFile, logLine);
     } catch (error) {
-      // Silent fail - no console logging in production
+      // TODO: BUG - Silent fail. If logging fails, the error is suppressed.
+      // This should at least be logged to `console.error` for debugging purposes.
       // Error will be handled by the calling method if needed
     }
   }
