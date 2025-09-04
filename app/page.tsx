@@ -9,82 +9,66 @@ export default function Page() {
   const [repoStructure, setRepoStructure] = useState<string[]>([]);
   const [logStats, setLogStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [cleanupStatus, setCleanupStatus] = useState<
+    'success' | 'error' | null
+  >(null);
 
   useEffect(() => {
-    // TODO: BUG - `console.log` statements should be removed in production.
-    // A wrapper for logging that can be disabled in production should be used.
-    console.log('[INFO] Application started');
     loadContent();
   }, []);
 
   const loadContent = async () => {
-    const startTime = Date.now();
-
+    setLoadError(null);
     try {
-      // TODO: BUG - `console.log` statements should be removed in production.
-      console.log('[INFO] Loading content started');
+      const responses = await Promise.all([
+        fetch('/api/memory'),
+        fetch('/api/instructions'),
+        fetch('/api/repos'),
+        fetch('/api/logs'),
+      ]);
 
-      // Load memory
-      // TODO: BUG - Lack of user feedback on partial failures. If some of these fetches
-      // fail, the UI doesn't clearly indicate what went wrong.
-      const memoryRes = await fetch('/api/memory');
-      if (memoryRes.ok) {
-        setMemoryContent(await memoryRes.text());
-        console.log('[INFO] Memory content loaded');
-      }
+      const [memoryRes, instructionsRes, repoRes, logsRes] = responses;
 
-      // Load instructions
-      const instructionsRes = await fetch('/api/instructions');
-      if (instructionsRes.ok) {
-        setInstructionsContent(await instructionsRes.text());
-        console.log('[INFO] Instructions content loaded');
-      }
+      if (!memoryRes.ok) throw new Error('Failed to load memory');
+      setMemoryContent(await memoryRes.text());
 
-      // Load repos
-      const repoRes = await fetch('/api/repos');
-      if (repoRes.ok) {
-        const repos = await repoRes.json();
-        setRepoStructure(repos);
-        console.log(
-          `[INFO] Repository structure loaded (${repos.length} repos)`
-        );
-      }
+      if (!instructionsRes.ok) throw new Error('Failed to load instructions');
+      setInstructionsContent(await instructionsRes.text());
 
-      // Load log stats
-      const logsRes = await fetch('/api/logs');
-      if (logsRes.ok) {
-        const logs = await logsRes.json();
-        setLogStats(logs);
-        console.log('[INFO] Log stats loaded');
-      }
+      if (!repoRes.ok) throw new Error('Failed to load repository structure');
+      setRepoStructure(await repoRes.json());
 
-      const duration = Date.now() - startTime;
-      console.log(`[INFO] Content loading completed in ${duration}ms`);
+      if (!logsRes.ok) throw new Error('Failed to load log stats');
+      setLogStats(await logsRes.json());
     } catch (error) {
-      const duration = Date.now() - startTime;
-      console.error(`[ERROR] Content loading failed in ${duration}ms:`, error);
+      setLoadError(
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleTabChange = (tabId: string) => {
-    console.log(`[INFO] Tab changed: ${activeTab} -> ${tabId}`);
     setActiveTab(tabId);
   };
 
   const cleanupLogs = async () => {
+    setCleanupStatus(null);
     try {
       const response = await fetch('/api/logs', { method: 'POST' });
       if (response.ok) {
         const result = await response.json();
         setLogStats(prev => ({ ...prev, currentStats: result.stats }));
-        console.log('[INFO] Log cleanup completed');
+        setCleanupStatus('success');
+      } else {
+        setCleanupStatus('error');
       }
-      // TODO: BUG - No user feedback on failed cleanup. The UI should show a toast or
-      // a message if the cleanup operation fails.
     } catch (error) {
-      console.error('[ERROR] Log cleanup failed:', error);
+      setCleanupStatus('error');
+    } finally {
+      setTimeout(() => setCleanupStatus(null), 3000);
     }
   };
 
@@ -103,6 +87,21 @@ export default function Page() {
       </header>
 
       <div className="max-w-6xl mx-auto p-4">
+        {/* Error Display */}
+        {loadError && (
+          <div className="bg-red-900 border border-red-700 text-white p-4 rounded-lg mb-6 flex justify-between items-center">
+            <div className="font-mono">
+              <span className="font-bold">Error:</span> {loadError}
+            </div>
+            <button
+              onClick={() => setLoadError(null)}
+              className="text-red-300 hover:text-white"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex border-b border-gray-800 mb-6">
           {[
@@ -181,12 +180,24 @@ export default function Page() {
                 <h2 className="font-mono text-gray-400 text-sm">
                   logs/ (rotating)
                 </h2>
-                <button
-                  onClick={cleanupLogs}
-                  className="px-3 py-1 font-mono text-xs bg-gray-800 text-gray-300 rounded hover:bg-gray-700"
-                >
-                  cleanup
-                </button>
+                <div className="flex items-center space-x-4">
+                  {cleanupStatus === 'success' && (
+                    <span className="font-mono text-xs text-green-500">
+                      success
+                    </span>
+                  )}
+                  {cleanupStatus === 'error' && (
+                    <span className="font-mono text-xs text-red-500">
+                      error
+                    </span>
+                  )}
+                  <button
+                    onClick={cleanupLogs}
+                    className="px-3 py-1 font-mono text-xs bg-gray-800 text-gray-300 rounded hover:bg-gray-700"
+                  >
+                    cleanup
+                  </button>
+                </div>
               </div>
               <div className="bg-gray-950 p-4 rounded border border-gray-800">
                 {logStats ? (

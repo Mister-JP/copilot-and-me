@@ -9,6 +9,7 @@ import {
 } from 'fs/promises';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { setTimeout } from 'timers/promises';
 
 interface LogEntry {
   level: 'info' | 'warn' | 'error';
@@ -21,15 +22,12 @@ class RotatingLogger {
   private logDir = join(process.cwd(), 'logs');
   private maxFileSize = 10 * 1024 * 1024; // 10MB per file
   private maxDays = 7; // Keep last 7 days
-  // TODO: BUG - `isDev` is incorrectly determined. `typeof window` is for client-side checks.
-  // For backend, this should be based on `process.env.NODE_ENV`.
-  private isDev = typeof window !== 'undefined';
+  // Correctly determine the environment.
+  private isDev = process.env.NODE_ENV === 'development';
 
   constructor() {
     this.ensureLogDir();
-    // TODO: BUG - `cleanupOldLogs` runs on every instantiation. In a serverless environment,
-    // this is inefficient. This should be run on a schedule or as a separate process.
-    this.cleanupOldLogs();
+    // `cleanupOldLogs` is now only called manually via the API endpoint.
   }
 
   private ensureLogDir() {
@@ -109,21 +107,31 @@ class RotatingLogger {
     if (this.isDev) return; // Only log to files in production
 
     const logFile = this.getLogFileName();
+    const lockFile = `${logFile}.lock`;
     const logLine = `${JSON.stringify(entry)}\n`;
 
+    // Wait for lock to be released
+    while (existsSync(lockFile)) {
+      await setTimeout(50); // Wait 50ms before retrying
+    }
+
     try {
-      // TODO: BUG - Potential race condition. If two requests trigger rotation at the same time,
-      // it could lead to lost log entries or corrupted files. A locking mechanism is needed.
+      // Acquire lock
+      await writeFile(lockFile, '');
+
+      // Perform rotation check and write
       if (existsSync(logFile) && (await this.shouldRotate(logFile))) {
         await this.rotateLogFile(logFile);
       }
-
-      // Atomically append to log file to prevent race conditions
       await appendFile(logFile, logLine);
     } catch (error) {
-      // TODO: BUG - Silent fail. If logging fails, the error is suppressed.
-      // This should at least be logged to `console.error` for debugging purposes.
-      // Error will be handled by the calling method if needed
+      // If logging fails, report it to the console. This is crucial for debugging.
+      console.error('[LOGGER] Failed to write to log file:', error);
+    } finally {
+      // Release lock
+      if (existsSync(lockFile)) {
+        await unlink(lockFile);
+      }
     }
   }
 
